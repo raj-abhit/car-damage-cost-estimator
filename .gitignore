@@ -1,0 +1,42 @@
+# ---------- Python ----------
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ---------- Environment ----------
+.env
+.env.*
+venv/
+.venv/
+env/
+
+# ---------- IDE / Editor ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- Training artifacts (not needed for deployment) ----------
+trash/
+runs/
+
+# ---------- YOLO / Ultralytics cache ----------
+*.onnx
+*.torchscript
+*.engine
+
+# ---------- Claude Code ----------
+.claude/
+
+# ---------- Gradio ----------
+flagged/

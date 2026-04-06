@@ -1,0 +1,6 @@
+gradio
+groq
+python-dotenv
+numpy
+Pillow
+ultralytics
