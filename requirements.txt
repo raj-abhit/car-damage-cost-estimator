@@ -4,3 +4,4 @@ python-dotenv
 numpy
 Pillow
 ultralytics
+opencv-python-headless
