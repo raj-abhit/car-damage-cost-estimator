@@ -288,7 +288,7 @@ def analyze_damage(image: Image.Image, yolo_context: str = "") -> str:
 # ---------------------------------------------------------------------------
 def process(image):
     """YOLO detection -> cost estimation -> LLM analysis."""
-    if image is None:
+    if image is None or not hasattr(image, "shape") or image.size == 0:
         return None, "Please upload an image."
 
     pil_image = Image.fromarray(image)
@@ -346,6 +346,32 @@ def process(image):
     return display_image, final_report
 
 
+def image_present(image) -> bool:
+    """True only when a non-empty numpy image is present."""
+    return image is not None and hasattr(image, "shape") and image.size > 0
+
+
+def update_run_button(image):
+    """Enable analyze button only when image exists."""
+    return gr.update(interactive=image_present(image))
+
+
+def on_image_cleared():
+    """Reset UI state when image is removed."""
+    return (
+        gr.update(interactive=False),
+        None,
+        "Please upload an image to start analysis.",
+    )
+
+
+def stop_message():
+    return (
+        "Stop requested. If analysis is queued it will be cancelled. "
+        "If a model request is already in progress, it may take a few seconds to end."
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gradio UI
 # ---------------------------------------------------------------------------
@@ -361,7 +387,11 @@ with gr.Blocks(title="Car Damage Cost Estimator") as demo:
     with gr.Row():
         with gr.Column(scale=1):
             input_image = gr.Image(label="Upload Car Image", type="numpy")
-            run_btn = gr.Button("Analyze Damage", variant="primary", size="lg")
+            with gr.Row():
+                run_btn = gr.Button(
+                    "Analyze Damage", variant="primary", size="lg", interactive=False
+                )
+                stop_btn = gr.Button("Stop Analysis", variant="stop", size="lg")
 
         with gr.Column(scale=1):
             output_image = gr.Image(
@@ -370,10 +400,27 @@ with gr.Blocks(title="Car Damage Cost Estimator") as demo:
 
     cost_output = gr.Markdown(label="Damage Assessment Report")
 
-    run_btn.click(
+    run_event = run_btn.click(
         fn=process,
         inputs=[input_image],
         outputs=[output_image, cost_output],
+    )
+    stop_btn.click(
+        fn=stop_message,
+        inputs=None,
+        outputs=[cost_output],
+        cancels=[run_event],
+    )
+
+    input_image.change(
+        fn=update_run_button,
+        inputs=[input_image],
+        outputs=[run_btn],
+    )
+    input_image.clear(
+        fn=on_image_cleared,
+        inputs=None,
+        outputs=[run_btn, output_image, cost_output],
     )
 
     sample_dir = os.path.join(os.path.dirname(__file__), "samples")
@@ -392,4 +439,5 @@ if __name__ == "__main__":
         server_port=int(os.environ.get("PORT", 7860)),
         share=False,
         theme=gr.themes.Soft(),
+        show_error=True,
     )
